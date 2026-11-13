@@ -1,0 +1,479 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <limits>
+using namespace std;
+
+// =====================================1 STRUCT DATA MAHASISWA =====================================
+
+struct Mahasiswa {
+    string nim;
+    string nama;
+    double tugas;
+    double kehadiran;
+    double uts;
+    double uas;
+    double mutuAngka;
+    char mutu;
+};
+
+// ===================================== STRUCT NODE LINKED LIST =====================================
+
+struct Node {
+    Mahasiswa data;
+    Node* next;
+    Node* prev;
+    Node(Mahasiswa m) {
+        data = m;
+        next = nullptr;
+        prev = nullptr;
+    }
+};
+
+// ===================================== CLASS LINKED LIST =====================================
+
+class LinkedList {
+private:
+    Node* head;
+    Node* tail;
+    int jumlah;
+    int jenis;
+    // jenis:
+    // 1 = Single Linked List
+    // 2 = Double Linked List
+    // 3 = Circular Linked List
+public:
+    LinkedList(int tipe) {
+        head = nullptr;
+        tail = nullptr;
+        jumlah = 0;
+        jenis = tipe;
+    }
+
+    // ===================================== DESTRUCTOR =====================================
+
+    ~LinkedList() {
+        while (head != nullptr) {
+            Node* hapus = head;
+            if (jenis == 3) {
+                if (head == tail) {
+                    head = nullptr;
+                    tail = nullptr;
+                } else {
+                    head = head->next;
+                    tail->next = head;
+                }
+            } else {
+                head = head->next;
+            }
+            delete hapus;
+        }
+    }
+
+    // ===================================== MENGHITUNG MUTU ANGKA =====================================
+
+    double hitungMutuAngka(Mahasiswa m) {
+        return
+            (m.tugas * 0.20) +
+            (m.kehadiran * 0.15) +
+            (m.uts * 0.30) +
+            (m.uas * 0.35);
+    }
+
+    // ===================================== MENENTUKAN MUTU =====================================
+
+    char hitungMutu(double angka) {
+        if (angka < 45) {
+            return 'E';
+        } else if (angka < 55) {
+            return 'D';
+        } else if (angka < 65) {
+            return 'C';
+        } else if (angka < 75) {
+            return 'B';
+        } else {
+            return 'A';
+        }
+    }
+
+    // ===================================== INPUT DATA MAHASISWA =====================================
+
+    Mahasiswa inputMahasiswa() {
+        Mahasiswa m;
+        cout << "\n===== INPUT DATA MAHASISWA =====\n";
+        cout << "NIM          : ";
+        getline(cin, m.nim);
+        cout << "Nama         : ";
+        getline(cin, m.nama);
+        cout << "Nilai Tugas (20%)      : ";
+        cin >> m.tugas;
+        cout << "Nilai Kehadiran (15%)   : ";
+        cin >> m.kehadiran;
+        cout << "Nilai UTS (30%)         : ";
+        cin >> m.uts;
+        cout << "Nilai UAS (35%)         : ";
+        cin >> m.uas;
+        cin.ignore(
+            numeric_limits<streamsize>::max(),
+            '\n'
+        );
+
+        // Validasi nilai
+
+        if (
+            m.tugas < 0 || m.tugas > 100 ||
+            m.kehadiran < 0 || m.kehadiran > 100 ||
+            m.uts < 0 || m.uts > 100 ||
+            m.uas < 0 || m.uas > 100
+        ) {
+            cout << "\nNilai harus antara 0 sampai 100!\n";
+            return inputMahasiswa();
+        }
+
+        // Hitung mutu angka
+
+        m.mutuAngka = hitungMutuAngka(m);
+
+        // Hitung mutu
+
+        m.mutu = hitungMutu(m.mutuAngka);
+        return m;
+    }
+
+    // ===================================== INPUT DATA AWAL =====================================
+
+    void inputData() {
+        Mahasiswa m = inputMahasiswa();
+        sisipBelakang(m);
+    }
+
+    // ===================================== SISIP DEPAN =====================================
+
+    void sisipDepan(Mahasiswa m) {
+        Node* baru = new Node(m);
+        if (head == nullptr) {
+            head = baru;
+            tail = baru;
+            if (jenis == 3) {
+                baru->next = baru;
+            }
+        } else {
+            baru->next = head;
+            if (jenis == 2) {
+                head->prev = baru;
+            }
+            head = baru;
+            if (jenis == 3) {
+                tail->next = head;
+            }
+        }
+        jumlah++;
+    }
+
+    // ===================================== SISIP BELAKANG =====================================
+
+    void sisipBelakang(Mahasiswa m) {
+        Node* baru = new Node(m);
+        if (head == nullptr) {
+            head = baru;
+            tail = baru;
+            if (jenis == 3) {
+                baru->next = baru;
+            }
+        } else {
+            tail->next = baru;
+            if (jenis == 2) {
+                baru->prev = tail;
+            }
+            tail = baru;
+            if (jenis == 3) {
+                tail->next = head;
+            }
+        }
+        jumlah++;
+    }
+
+    // ===================================== SISIP TENGAH =====================================
+
+    void sisipTengah(Mahasiswa m) {
+        if (jumlah < 2) {
+            cout << "\nData belum cukup untuk sisip tengah!\n";
+            return;
+        }
+        int posisi;
+        cout << "Masukkan posisi sisip (2 - "
+             << jumlah << "): ";
+        cin >> posisi;
+        cin.ignore(
+            numeric_limits<streamsize>::max(),
+            '\n'
+        );
+        if (posisi < 2 || posisi > jumlah) {
+            cout << "\nPosisi tidak valid!\n";
+            return;
+        }
+        Node* baru = new Node(m);
+        Node* bantu = head;
+        for (int i = 1; i < posisi; i++) {
+            bantu = bantu->next;
+        }
+        baru->next = bantu;
+        Node* sebelumnya = head;
+        while (sebelumnya->next != bantu) {
+            sebelumnya = sebelumnya->next;
+        }
+        sebelumnya->next = baru;
+        if (jenis == 2) {
+            baru->prev = sebelumnya;
+            bantu->prev = baru;
+        }
+        jumlah++;
+    }
+
+    // ===================================== HAPUS DEPAN =====================================
+
+    void hapusDepan() {
+        if (head == nullptr) {
+            cout << "\nData masih kosong!\n";
+            return;
+        }
+        Node* hapus = head;
+        if (head == tail) {
+            head = nullptr;
+            tail = nullptr;
+        } else {
+            head = head->next;
+            if (jenis == 2) {
+                head->prev = nullptr;
+            }
+            if (jenis == 3) {
+                tail->next = head;
+            }
+        }
+        delete hapus;
+        jumlah--;
+        cout << "\nData depan berhasil dihapus!\n";
+    }
+
+    // ===================================== HAPUS BELAKANG =====================================
+
+    void hapusBelakang() {
+        if (head == nullptr) {
+            cout << "\nData masih kosong!\n";
+            return;
+        }
+        if (head == tail) {
+            delete head;
+            head = nullptr;
+            tail = nullptr;
+            jumlah--;
+            cout << "\nData berhasil dihapus!\n";
+            return;
+        }
+        Node* bantu = head;
+        while (bantu->next != tail) {
+            bantu = bantu->next;
+        }
+        delete tail;
+        tail = bantu;
+        tail->next = nullptr;
+        if (jenis == 3) {
+            tail->next = head;
+        }
+        jumlah--;
+        cout << "\nData belakang berhasil dihapus!\n";
+    }
+
+    // ===================================== HAPUS TENGAH =====================================
+
+    void hapusTengah() {
+        if (jumlah < 3) {
+            cout << "\nData belum cukup untuk hapus tengah!\n";
+            return;
+        }
+        int posisi;
+        cout << "Masukkan posisi hapus (2 - "
+             << jumlah - 1 << "): ";
+        cin >> posisi;
+        cin.ignore(
+            numeric_limits<streamsize>::max(),
+            '\n'
+        );
+        if (posisi < 2 || posisi >= jumlah) {
+            cout << "\nPosisi tidak valid!\n";
+            return;
+        }
+        Node* bantu = head;
+        for (int i = 1; i < posisi; i++) {
+            bantu = bantu->next;
+        }
+        Node* sebelumnya = head;
+        while (sebelumnya->next != bantu) {
+            sebelumnya = sebelumnya->next;
+        }
+        sebelumnya->next = bantu->next;
+        if (jenis == 2) {
+            bantu->next->prev = sebelumnya;
+        }
+        delete bantu;
+        jumlah--;
+        cout << "\nData tengah berhasil dihapus!\n";
+    }
+
+    // ===================================== TAMPILKAN DATA =====================================
+
+    void tampilData() {
+        if (head == nullptr) {
+            cout << "\nData mahasiswa masih kosong!\n";
+            return;
+        }
+        cout << "\n";
+        cout << "============================================================\n";
+        cout << left
+             << setw(15) << "NIM"
+             << setw(20) << "Nama"
+             << setw(10) << "Tugas"
+             << setw(12) << "Hadir"
+             << setw(10) << "UTS"
+             << setw(10) << "UAS"
+             << setw(12) << "Mutu Angka"
+             << setw(8) << "Mutu"
+             << endl;
+        cout << "============================================================\n";
+        Node* bantu = head;
+        do {
+            cout << left
+                 << setw(15) << bantu->data.nim
+                 << setw(20) << bantu->data.nama
+                 << setw(10) << bantu->data.tugas
+                 << setw(12) << bantu->data.kehadiran
+                 << setw(10) << bantu->data.uts
+                 << setw(10) << bantu->data.uas
+                 << setw(12) << fixed << setprecision(2)
+                 << bantu->data.mutuAngka
+                 << setw(8) << bantu->data.mutu
+                 << endl;
+            bantu = bantu->next;
+        } while (
+            bantu != nullptr &&
+            bantu != head
+        );
+        cout << "============================================================\n";
+        cout << "Jumlah mahasiswa: " << jumlah << endl;
+    }
+
+    // ===================================== MENU LINKED LIST =====================================
+
+    void menu() {
+        int pilihan;
+        do {
+            cout << "\n====================================\n";
+            if (jenis == 1) {
+                cout << " MENU SINGLE LINKED LIST\n";
+            } else if (jenis == 2) {
+                cout << " MENU DOUBLE LINKED LIST\n";
+            } else {
+                cout << " MENU CIRCULAR LINKED LIST\n";
+            }
+            cout << "====================================\n";
+            cout << "1. Input Data Mahasiswa\n";
+            cout << "2. Sisip Depan\n";
+            cout << "3. Sisip Tengah\n";
+            cout << "4. Sisip Belakang\n";
+            cout << "5. Hapus Depan\n";
+            cout << "6. Hapus Tengah\n";
+            cout << "7. Hapus Belakang\n";
+            cout << "8. Tampilkan Data Mahasiswa\n";
+            cout << "9. Kembali ke Menu Utama\n";
+            cout << "====================================\n";
+            cout << "Pilih menu: ";
+            cin >> pilihan;
+            cin.ignore(
+                numeric_limits<streamsize>::max(),
+                '\n'
+            );
+            switch (pilihan) {
+                case 1:
+                    inputData();
+                    break;
+                case 2: {
+                    Mahasiswa m = inputMahasiswa();
+                    sisipDepan(m);
+                    break;
+                }
+                case 3: {
+                    Mahasiswa m = inputMahasiswa();
+                    sisipTengah(m);
+                    break;
+                }
+                case 4: {
+                    Mahasiswa m = inputMahasiswa();
+                    sisipBelakang(m);
+                    break;
+                }
+                case 5:
+                    hapusDepan();
+                    break;
+                case 6:
+                    hapusTengah();
+                    break;
+                case 7:
+                    hapusBelakang();
+                    break;
+                case 8:
+                    tampilData();
+                    break;
+                case 9:
+                    cout << "\nKembali ke menu utama...\n";
+                    break;
+                default:
+                    cout << "\nPilihan tidak valid!\n";
+            }
+        } while (pilihan != 9);
+    }
+};
+
+// ===================================== MENU UTAMA =====================================
+
+int main() {
+    int pilihan;
+    do {
+        cout << "\n====================================\n";
+        cout << "       MENU UTAMA PROGRAM\n";
+        cout << "====================================\n";
+        cout << "1. Single Linked List\n";
+        cout << "2. Double Linked List\n";
+        cout << "3. Circular Linked List\n";
+        cout << "4. Keluar\n";
+        cout << "====================================\n";
+        cout << "Pilih menu: ";
+        cin >> pilihan;
+        cin.ignore(
+            numeric_limits<streamsize>::max(),
+            '\n'
+        );
+        switch (pilihan) {
+            case 1: {
+                LinkedList single(1);
+                single.menu();
+                break;
+            }
+            case 2: {
+                LinkedList doubly(2);
+                doubly.menu();
+                break;
+            }
+            case 3: {
+                LinkedList circular(3);
+                circular.menu();
+                break;
+            }
+            case 4:
+                cout << "\nProgram selesai.\n";
+                break;
+            default:
+                cout << "\nPilihan tidak valid!\n";
+        }
+    } while (pilihan != 4);
+    return 0;
+}
